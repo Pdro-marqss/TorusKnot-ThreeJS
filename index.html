@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ThreeJS - Basics</title>
+
+    <link rel="stylesheet" href="style.css" />
+
+<body>
+    <div id="preloader"></div>
+
+    <script src="js/three.js"></script>
+    <script>
+        //loading to the page
+        var loader = document.getElementById("preloader");
+
+        //imagine a movie set. We have a scene, the objects (characters, scene objects) and a camera. The first thing is the scene.
+        const scene = new THREE.Scene();
+
+        //perspectiveCamera do something like real life. Objects closer to the camera are big and obbjects far are small. First value is the angle, the second aspect ratio.
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight);
+
+        //the camera and objects need a position, otherwise all of then we stand in the middle of the scene, one inside the other.
+        camera.position.z = 3; //x sides, y up/down, z forward backward
+        // camera.position.x = -1;
+
+        //add camera to the scene
+        scene.add(camera);
+
+        //Loading a texture to use as a material to the mesh
+        const textureLoader = new THREE.TextureLoader();
+        const texture = textureLoader.load('https://bruno-simon.com/prismic/matcaps/8.png');
+
+        //next step is add a object. An object that we can see is called a mesh. A mesh is composed of two things, Geometry (is like the vertices) and material
+        //const geometry = new THREE.BoxGeometry(1, 1, 1); with, height, depth
+        // const material = new THREE.MeshBasicMaterial({ color: '#FF6140' });
+        const geometry = new THREE.TorusKnotGeometry(0.5, 0.2, 400, 42);
+        const material = new THREE.MeshMatcapMaterial({ matcap: texture });
+        const mesh = new THREE.Mesh(geometry, material);
+        // mesh.rotation.y = Math.PI / 4;
+        scene.add(mesh);
+
+        //Make the scene be renderer in page
+        const renderer = new THREE.WebGLRenderer({ alpha: true });//alpha remove sstandard background color from canvas
+        renderer.setSize(window.innerWidth, window.innerHeight); //the size of the scene render in page
+
+        //We canot just put stuff inside the page, need be draw on a canvas. We can create a canvas html tag in index or let the renderer const create one for us (create automatically).
+        document.body.append(renderer.domElement); //adding the created canvas to the html body
+
+        //taking the cursor cordinates to do a animation on the mesh based in this.
+        const cursor = { x: 0, y: 0 }
+        window.addEventListener('mousemove', (event) => {
+            cursor.x = event.clientX / window.innerWidth - 0.5;
+            cursor.y = event.clientY / window.innerHeight - 0.5;
+        })
+
+        //render is like take photos of the scene and add to page. Like a film we can take a lot of photos per second to do the frames. Sometimes the objects do not will be appear beacuse the texture not load in the time of the picture. They need more time, so we can use a timeout
+        // window.setTimeout(() => {
+        //     renderer.render(scene, camera);
+        // }, 3000);
+
+        //another (better) way to do is :
+        const tick = () => {
+
+            //the function start, call in requestAnimationFrame the function again, and do a loop in eachframe.
+            window.requestAnimationFrame(tick);
+
+            mesh.rotation.y += 0.005;
+            mesh.rotation.x += 0.002;
+
+            const cameraX = cursor.x;
+            const cameraY = - cursor.y; //this cursor is negative because in clientX is positive when going down with cursor, but in threeJS the Y is positive when going up (because the moviment is in the camera angle and not in the object).
+
+            //normal mouse animation
+            // camera.position.x = cameraX;
+            // camera.position.y = cameraY;
+
+            //ease smooth mouse animation
+            camera.position.x += (cameraX - camera.position.x) / 20;
+            camera.position.y += (cameraY - camera.position.y) / 20;
+
+
+            renderer.render(scene, camera);
+        }
+        tick();
+
+        //loading event. Give time to materials load.
+        window.addEventListener("load", function () {
+            loader.style.display = "none";
+        })
+
+        // console.log(renderer.domElement);
+    </script>
+</body>
+
+</html>
